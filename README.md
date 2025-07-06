@@ -1,87 +1,67 @@
-# Free Cluely
+# Realtime Tone
 
-A desktop application to help you cheat on everything. 
+A desktop application that provides real-time tone analysis and feedback for audio input. This tool helps users understand and analyze the emotional tone of speech in real-time, making it useful for practice sessions, presentations, and communication improvement.
 
-## 🚀 Quick Start Guide
+## Installation
 
 ### Prerequisites
-- Make sure you have Node.js installed on your computer
-- Git installed on your computer
-- A Gemini API key (get it from [Google AI Studio](https://makersuite.google.com/app/apikey))
 
-### Installation Steps
+- Node.js
+- Git
+- Gemini API key (get it from [Google AI Studio](https://makersuite.google.com/app/apikey))
+
+### Setup Steps
 
 1. Clone the repository:
+
 ```bash
-git clone [repository-url]
-cd interview-coder
+git clone https://github.com/itsukison/realtime-tone.git
+cd realtime-tone
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
-   - Create a file named `.env` in the root folder
+3. Configure environment:
+   - Create a `.env` file in the root directory
    - Add your Gemini API key:
    ```
    GEMINI_API_KEY=your_api_key_here
    ```
-   - Save the file
 
-### Running the App
+### Running the Application
 
-#### Method 1: Development Mode (Recommended for first run)
-1. Open a terminal and run:
+#### Development Mode
+
 ```bash
+# Terminal 1
 npm run dev -- --port 5180
-```
 
-2. Open another terminal in the same folder and run:
-```bash
+# Terminal 2
 NODE_ENV=development npm run electron:dev
 ```
 
-#### Method 2: Production Mode
+#### Production Build
+
 ```bash
 npm run build
 ```
-The built app will be in the `release` folder.
 
-### ⚠️ Important Notes
+Built application will be available in the `release` folder.
 
-1. **Closing the App**: 
-   - Press `Cmd + Q` (Mac) or `Ctrl + Q` (Windows/Linux) to quit
-   - Or use Activity Monitor/Task Manager to close `Interview Coder`
-   - The X button currently doesn't work (known issue)
+### Keyboard Shortcuts
 
-2. **If the app doesn't start**:
-   - Make sure no other app is using port 5180
-   - Try killing existing processes:
-     ```bash
-     # Find processes using port 5180
-     lsof -i :5180
-     # Kill them (replace [PID] with the process ID)
-     kill [PID]
-     ```
-
-3. **Keyboard Shortcuts**:
-   - `Cmd/Ctrl + B`: Toggle window visibility
-   - `Cmd/Ctrl + H`: Take screenshot
-   - 'Cmd/Enter': Get solution
-   - `Cmd/Ctrl + Arrow Keys`: Move window
-
-### Troubleshooting
-
-If you see errors:
-1. Delete the `node_modules` folder
-2. Delete `package-lock.json`
-3. Run `npm install` again
-4. Try running the app again using Method 1
+- `Cmd/Ctrl + B`: Toggle window
+- `Cmd/Ctrl + H`: Take screenshot
+- `Cmd/Enter`: Get solution
+- `Cmd/Ctrl + Arrow Keys`: Move window
+- `Cmd + Q` (Mac) / `Ctrl + Q` (Windows/Linux): Quit application
 
 ## Contribution
 
 I'm unable to maintain this repo actively because I do not have the time for it. Please do not create issues, if you have any PRs feel free to create them and i'll review and merge it.
 
-If you are looking to integrate this for your company, i can work with you to create custom solutions. 
+If you are looking to integrate this for your company, i can work with you to create custom solutions.
