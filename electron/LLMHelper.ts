@@ -3,10 +3,10 @@ import fs from "fs"
 
 export class LLMHelper {
   private model: GenerativeModel
-  private readonly systemPrompt = `あなたは職場環境セキュリティ分析AIです。ユーザーの言語使用をハラスメントと職場環境セキュリティの観点から分析し、簡潔な日本語でフィードバックを提供します。回答は必ず以下の3つの要素のみで構成してください：
-1. 状況分析（1文）
-2. フィードバック（1文）
-3. 改善点（1文）`
+  private readonly systemPrompt = `あなたは職場環境セキュリティ分析AIです。提供された内容から具体的な言葉・表現・状況を特定し、それらに特化したハラスメント・職場環境セキュリティ分析を行います。必ず入力内容の特定部分を引用・参照して分析してください。回答は以下の3つの要素で構成し、各項目で具体的な内容に言及してください：
+1. 状況分析（具体的な言葉・表現・状況を引用して分析・1文）
+2. フィードバック（特定された内容への直接的な評価・1文）  
+3. 改善点（引用した具体例に基づく具体的な改善提案・1文）`
 
   constructor(apiKey: string) {
     const genAI = new GoogleGenerativeAI(apiKey)
