@@ -1,32 +1,33 @@
 // Solutions.tsx
-import React, { useState, useEffect, useRef } from "react"
-import { useQuery, useQueryClient } from "react-query"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism"
+import React, { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "react-query";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
+import ScreenshotQueue from "../components/Queue/ScreenshotQueue";
 import {
   Toast,
   ToastDescription,
   ToastMessage,
   ToastTitle,
-  ToastVariant
-} from "../components/ui/toast"
-import { ProblemStatementData } from "../types/solutions"
-import { AudioResult } from "../types/audio"
-import SolutionCommands from "../components/Solutions/SolutionCommands"
-import Debug from "./Debug"
+  ToastVariant,
+} from "../components/ui/toast";
+import { ProblemStatementData } from "../types/solutions";
+import { AudioResult } from "../types/audio";
+import SolutionCommands from "../components/Solutions/SolutionCommands";
+import Debug from "./Debug";
+import { parseBoldText } from "../lib/utils";
 
 // (Using global ElectronAPI type from src/types/electron.d.ts)
 
 export const ContentSection = ({
   title,
   content,
-  isLoading
+  isLoading,
 }: {
-  title: string
-  content: React.ReactNode
-  isLoading: boolean
+  title: string;
+  content: React.ReactNode;
+  isLoading: boolean;
 }) => (
   <div className="space-y-2">
     <h2 className="text-[13px] font-medium text-white tracking-wide">
@@ -39,20 +40,20 @@ export const ContentSection = ({
         </p>
       </div>
     ) : (
-      <div className="text-[13px] leading-[1.4] text-gray-100 max-w-[600px]">
-        {content}
+      <div className="text-[13px] leading-[1.4] text-gray-50 w-full whitespace-pre-line">
+        {typeof content === "string" ? parseBoldText(content) : content}
       </div>
     )}
   </div>
-)
+);
 const SolutionSection = ({
   title,
   content,
-  isLoading
+  isLoading,
 }: {
-  title: string
-  content: React.ReactNode
-  isLoading: boolean
+  title: string;
+  content: React.ReactNode;
+  isLoading: boolean;
 }) => (
   <div className="space-y-2">
     <h2 className="text-[13px] font-medium text-white tracking-wide">
@@ -77,7 +78,7 @@ const SolutionSection = ({
             margin: 0,
             padding: "1rem",
             whiteSpace: "pre-wrap",
-            wordBreak: "break-all"
+            wordBreak: "break-all",
           }}
           wrapLongLines={true}
         >
@@ -86,16 +87,16 @@ const SolutionSection = ({
       </div>
     )}
   </div>
-)
+);
 
 export const ComplexitySection = ({
   timeComplexity,
   spaceComplexity,
-  isLoading
+  isLoading,
 }: {
-  timeComplexity: string | null
-  spaceComplexity: string | null
-  isLoading: boolean
+  timeComplexity: string | null;
+  spaceComplexity: string | null;
+  isLoading: boolean;
 }) => (
   <div className="space-y-2">
     <h2 className="text-[13px] font-medium text-white tracking-wide">
@@ -122,180 +123,189 @@ export const ComplexitySection = ({
       </div>
     )}
   </div>
-)
+);
 
 interface SolutionsProps {
-  setView: React.Dispatch<React.SetStateAction<"queue" | "solutions" | "debug">>
+  setView: React.Dispatch<
+    React.SetStateAction<"queue" | "solutions" | "debug">
+  >;
 }
 const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
-  const queryClient = useQueryClient()
-  const contentRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Audio recording state
-  const [audioRecording, setAudioRecording] = useState(false)
-  const [audioResult, setAudioResult] = useState<AudioResult | null>(null)
+  const [audioRecording, setAudioRecording] = useState(false);
+  const [audioResult, setAudioResult] = useState<AudioResult | null>(null);
 
-  const [debugProcessing, setDebugProcessing] = useState(false)
+  const [debugProcessing, setDebugProcessing] = useState(false);
   const [problemStatementData, setProblemStatementData] =
-    useState<ProblemStatementData | null>(null)
-  const [solutionData, setSolutionData] = useState<string | null>(null)
-  const [thoughtsData, setThoughtsData] = useState<string[] | null>(null)
+    useState<ProblemStatementData | null>(null);
+  const [solutionData, setSolutionData] = useState<string | null>(null);
+  const [thoughtsData, setThoughtsData] = useState<string[] | null>(null);
   const [timeComplexityData, setTimeComplexityData] = useState<string | null>(
     null
-  )
+  );
   const [spaceComplexityData, setSpaceComplexityData] = useState<string | null>(
     null
-  )
-  const [customContent, setCustomContent] = useState<string | null>(null)
+  );
+  const [customContent, setCustomContent] = useState<string | null>(null);
 
-  const [toastOpen, setToastOpen] = useState(false)
+  const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastMessage>({
     title: "",
     description: "",
-    variant: "neutral"
-  })
+    variant: "neutral",
+  });
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const [tooltipHeight, setTooltipHeight] = useState(0)
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipHeight, setTooltipHeight] = useState(0);
 
-  const [isResetting, setIsResetting] = useState(false)
+  const [isResetting, setIsResetting] = useState(false);
 
-  const { data: extraScreenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
+  const { data: extraScreenshots = [], refetch } = useQuery<
+    Array<{ path: string; preview: string }>,
+    Error
+  >(
     ["extras"],
     async () => {
       try {
-        const existing = await window.electronAPI.getScreenshots()
-        return existing
+        const existing = await window.electronAPI.getScreenshots();
+        return existing;
       } catch (error) {
-        console.error("Error loading extra screenshots:", error)
-        return []
+        console.error("Error loading extra screenshots:", error);
+        return [];
       }
     },
     {
       staleTime: Infinity,
-      cacheTime: Infinity
+      cacheTime: Infinity,
     }
-  )
+  );
 
   const showToast = (
     title: string,
     description: string,
     variant: ToastVariant
   ) => {
-    setToastMessage({ title, description, variant })
-    setToastOpen(true)
-  }
+    setToastMessage({ title, description, variant });
+    setToastOpen(true);
+  };
 
   const handleDeleteExtraScreenshot = async (index: number) => {
-    const screenshotToDelete = extraScreenshots[index]
+    const screenshotToDelete = extraScreenshots[index];
 
     try {
       const response = await window.electronAPI.deleteScreenshot(
         screenshotToDelete.path
-      )
+      );
 
       if (response.success) {
-        refetch() // Refetch screenshots instead of managing state directly
+        refetch(); // Refetch screenshots instead of managing state directly
       } else {
-        console.error("Failed to delete extra screenshot:", response.error)
+        console.error("Failed to delete extra screenshot:", response.error);
       }
     } catch (error) {
-      console.error("Error deleting extra screenshot:", error)
+      console.error("Error deleting extra screenshot:", error);
     }
-  }
+  };
 
   useEffect(() => {
     // Height update logic
     const updateDimensions = () => {
       if (contentRef.current) {
-        let contentHeight = contentRef.current.scrollHeight
-        const contentWidth = contentRef.current.scrollWidth
+        let contentHeight = contentRef.current.scrollHeight;
+        const contentWidth = contentRef.current.scrollWidth;
         if (isTooltipVisible) {
-          contentHeight += tooltipHeight
+          contentHeight += tooltipHeight;
         }
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
-          height: contentHeight
-        })
+          height: contentHeight,
+        });
       }
-    }
+    };
 
     // Initialize resize observer
-    const resizeObserver = new ResizeObserver(updateDimensions)
+    const resizeObserver = new ResizeObserver(updateDimensions);
     if (contentRef.current) {
-      resizeObserver.observe(contentRef.current)
+      resizeObserver.observe(contentRef.current);
     }
-    updateDimensions()
+    updateDimensions();
 
     // Set up event listeners
     const cleanupFunctions = [
       window.electronAPI.onScreenshotTaken(() => refetch()),
       window.electronAPI.onResetView(() => {
         // Set resetting state first
-        setIsResetting(true)
+        setIsResetting(true);
 
         // Clear the queries
-        queryClient.removeQueries(["solution"])
-        queryClient.removeQueries(["new_solution"])
+        queryClient.removeQueries(["solution"]);
+        queryClient.removeQueries(["new_solution"]);
 
         // Reset other states
-        refetch()
+        refetch();
 
         // After a small delay, clear the resetting state
         setTimeout(() => {
-          setIsResetting(false)
-        }, 0)
+          setIsResetting(false);
+        }, 0);
       }),
       window.electronAPI.onSolutionStart(async () => {
         // Reset UI state for a new solution
-        setSolutionData(null)
-        setThoughtsData(null)
-        setTimeComplexityData(null)
-        setSpaceComplexityData(null)
-        setCustomContent(null)
-        setAudioResult(null)
+        setSolutionData(null);
+        setThoughtsData(null);
+        setTimeComplexityData(null);
+        setSpaceComplexityData(null);
+        setCustomContent(null);
+        setAudioResult(null);
 
         // Start audio recording from user's microphone
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-          const mediaRecorder = new MediaRecorder(stream)
-          const chunks: Blob[] = []
-          mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
-          mediaRecorder.start()
-          setAudioRecording(true)
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          const mediaRecorder = new MediaRecorder(stream);
+          const chunks: Blob[] = [];
+          mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+          mediaRecorder.start();
+          setAudioRecording(true);
           // Record for 5 seconds (or adjust as needed)
-          setTimeout(() => mediaRecorder.stop(), 5000)
+          setTimeout(() => mediaRecorder.stop(), 5000);
           mediaRecorder.onstop = async () => {
-            setAudioRecording(false)
-            const blob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' })
-            const reader = new FileReader()
+            setAudioRecording(false);
+            const blob = new Blob(chunks, {
+              type: chunks[0]?.type || "audio/webm",
+            });
+            const reader = new FileReader();
             reader.onloadend = async () => {
-              const base64Data = (reader.result as string).split(',')[1]
+              const base64Data = (reader.result as string).split(",")[1];
               // Send audio to Gemini for analysis
               try {
                 const result = await window.electronAPI.analyzeAudioFromBase64(
                   base64Data,
                   blob.type
-                )
+                );
                 // Store result in react-query cache
-                queryClient.setQueryData(["audio_result"], result)
-                setAudioResult(result)
+                queryClient.setQueryData(["audio_result"], result);
+                setAudioResult(result);
               } catch (err) {
-                console.error('Audio analysis failed:', err)
+                console.error("Audio analysis failed:", err);
               }
-            }
-            reader.readAsDataURL(blob)
-          }
+            };
+            reader.readAsDataURL(blob);
+          };
         } catch (err) {
-          console.error('Audio recording error:', err)
+          console.error("Audio recording error:", err);
         }
 
         // Simulate receiving custom content shortly after start
         setTimeout(() => {
           setCustomContent(
             "This is the dynamically generated content appearing after loading starts."
-          )
-        }, 1500) // Example delay
+          );
+        }, 1500); // Example delay
       }),
       //if there was an error processing the initial solution
       window.electronAPI.onSolutionError((error: string) => {
@@ -303,44 +313,44 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
           "Processing Failed",
           "There was an error processing your extra screenshots.",
           "error"
-        )
+        );
         // Reset solutions in the cache (even though this shouldn't ever happen) and complexities to previous states
         const solution = queryClient.getQueryData(["solution"]) as {
-          code: string
-          thoughts: string[]
-          time_complexity: string
-          space_complexity: string
-        } | null
+          code: string;
+          thoughts: string[];
+          time_complexity: string;
+          space_complexity: string;
+        } | null;
         if (!solution) {
-          setView("queue") //make sure that this is correct. or like make sure there's a toast or something
+          setView("queue"); //make sure that this is correct. or like make sure there's a toast or something
         }
-        setSolutionData(solution?.code || null)
-        setThoughtsData(solution?.thoughts || null)
-        setTimeComplexityData(solution?.time_complexity || null)
-        setSpaceComplexityData(solution?.space_complexity || null)
-        console.error("Processing error:", error)
+        setSolutionData(solution?.code || null);
+        setThoughtsData(solution?.thoughts || null);
+        setTimeComplexityData(solution?.time_complexity || null);
+        setSpaceComplexityData(solution?.space_complexity || null);
+        console.error("Processing error:", error);
       }),
       //when the initial solution is generated, we'll set the solution data to that
       window.electronAPI.onSolutionSuccess((data) => {
         if (!data?.solution) {
-          console.warn("Received empty or invalid solution data")
-          return
+          console.warn("Received empty or invalid solution data");
+          return;
         }
 
-        console.log({ solution: data.solution })
+        console.log({ solution: data.solution });
 
         const solutionData = {
           code: data.solution.code,
           thoughts: data.solution.thoughts,
           time_complexity: data.solution.time_complexity,
-          space_complexity: data.solution.space_complexity
-        }
+          space_complexity: data.solution.space_complexity,
+        };
 
-        queryClient.setQueryData(["solution"], solutionData)
-        setSolutionData(solutionData.code || null)
-        setThoughtsData(solutionData.thoughts || null)
-        setTimeComplexityData(solutionData.time_complexity || null)
-        setSpaceComplexityData(solutionData.space_complexity || null)
+        queryClient.setQueryData(["solution"], solutionData);
+        setSolutionData(solutionData.code || null);
+        setThoughtsData(solutionData.thoughts || null);
+        setTimeComplexityData(solutionData.time_complexity || null);
+        setSpaceComplexityData(solutionData.space_complexity || null);
       }),
 
       //########################################################
@@ -348,14 +358,14 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
       //########################################################
       window.electronAPI.onDebugStart(() => {
         //we'll set the debug processing state to true and use that to render a little loader
-        setDebugProcessing(true)
+        setDebugProcessing(true);
       }),
       //the first time debugging works, we'll set the view to debug and populate the cache with the data
       window.electronAPI.onDebugSuccess((data) => {
-        console.log({ debug_data: data })
+        console.log({ debug_data: data });
 
-        queryClient.setQueryData(["new_solution"], data.solution)
-        setDebugProcessing(false)
+        queryClient.setQueryData(["new_solution"], data.solution);
+        setDebugProcessing(false);
       }),
       //when there was an error in the initial debugging, we'll show a toast and stop the little generating pulsing thing.
       window.electronAPI.onDebugError(() => {
@@ -363,57 +373,59 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
           "Processing Failed",
           "There was an error debugging your code.",
           "error"
-        )
-        setDebugProcessing(false)
+        );
+        setDebugProcessing(false);
       }),
       window.electronAPI.onProcessingNoScreenshots(() => {
         showToast(
           "No Screenshots",
           "There are no extra screenshots to process.",
           "neutral"
-        )
-      })
-    ]
+        );
+      }),
+    ];
 
     return () => {
-      resizeObserver.disconnect()
-      cleanupFunctions.forEach((cleanup) => cleanup())
-    }
-  }, [isTooltipVisible, tooltipHeight])
+      resizeObserver.disconnect();
+      cleanupFunctions.forEach((cleanup) => cleanup());
+    };
+  }, [isTooltipVisible, tooltipHeight]);
 
   useEffect(() => {
     setProblemStatementData(
       queryClient.getQueryData(["problem_statement"]) || null
-    )
-    setSolutionData(queryClient.getQueryData(["solution"]) || null)
+    );
+    setSolutionData(queryClient.getQueryData(["solution"]) || null);
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event?.query.queryKey[0] === "problem_statement") {
         setProblemStatementData(
           queryClient.getQueryData(["problem_statement"]) || null
-        )
+        );
         // If this is from audio processing, show it in the custom content section
-        const audioResult = queryClient.getQueryData(["audio_result"]) as AudioResult | undefined;
+        const audioResult = queryClient.getQueryData(["audio_result"]) as
+          | AudioResult
+          | undefined;
         if (audioResult) {
           // Update all relevant sections when audio result is received
           setProblemStatementData({
             problem_statement: audioResult.text,
             input_format: {
               description: "Generated from audio input",
-              parameters: []
+              parameters: [],
             },
             output_format: {
               description: "Generated from audio input",
               type: "string",
-              subtype: "text"
+              subtype: "text",
             },
             complexity: {
               time: "N/A",
-              space: "N/A"
+              space: "N/A",
             },
             test_cases: [],
             validation_type: "manual",
-            difficulty: "custom"
+            difficulty: "custom",
           });
           setSolutionData(null); // Reset solution to trigger loading state
           setThoughtsData(null);
@@ -423,25 +435,25 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
       }
       if (event?.query.queryKey[0] === "solution") {
         const solution = queryClient.getQueryData(["solution"]) as {
-          code: string
-          thoughts: string[]
-          time_complexity: string
-          space_complexity: string
-        } | null
+          code: string;
+          thoughts: string[];
+          time_complexity: string;
+          space_complexity: string;
+        } | null;
 
-        setSolutionData(solution?.code ?? null)
-        setThoughtsData(solution?.thoughts ?? null)
-        setTimeComplexityData(solution?.time_complexity ?? null)
-        setSpaceComplexityData(solution?.space_complexity ?? null)
+        setSolutionData(solution?.code ?? null);
+        setThoughtsData(solution?.thoughts ?? null);
+        setTimeComplexityData(solution?.time_complexity ?? null);
+        setSpaceComplexityData(solution?.space_complexity ?? null);
       }
-    })
-    return () => unsubscribe()
-  }, [queryClient])
+    });
+    return () => unsubscribe();
+  }, [queryClient]);
 
   const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
-    setIsTooltipVisible(visible)
-    setTooltipHeight(height)
-  }
+    setIsTooltipVisible(visible);
+    setTooltipHeight(height);
+  };
 
   return (
     <>
@@ -486,13 +498,17 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
           />
 
           {/* Main Content - Modified width constraints */}
-          <div className="w-full text-sm text-black bg-black/60 rounded-md">
+          <div className="w-full text-sm text-white bg-black/85 rounded-xl border border-white/10 content-area">
             <div className="rounded-lg overflow-hidden">
-              <div className="px-4 py-3 space-y-4 max-w-full">
+              <div className="px-4 py-3 space-y-4 w-full">
                 {/* Show Screenshot or Audio Result as main output if validation_type is manual */}
                 {problemStatementData?.validation_type === "manual" ? (
                   <ContentSection
-                    title={problemStatementData?.output_format?.subtype === "voice" ? "Audio Result" : "Screenshot Result"}
+                    title={
+                      problemStatementData?.output_format?.subtype === "voice"
+                        ? "Audio Result"
+                        : "Screenshot Result"
+                    }
                     content={problemStatementData.problem_statement}
                     isLoading={false}
                   />
@@ -500,7 +516,11 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
                   <>
                     {/* Problem Statement Section - Only for non-manual */}
                     <ContentSection
-                      title={problemStatementData?.output_format?.subtype === "voice" ? "Voice Input" : "Problem Statement"}
+                      title={
+                        problemStatementData?.output_format?.subtype === "voice"
+                          ? "Voice Input"
+                          : "Problem Statement"
+                      }
                       content={problemStatementData?.problem_statement}
                       isLoading={!problemStatementData}
                     />
@@ -508,8 +528,9 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
                     {problemStatementData && !solutionData && (
                       <div className="mt-4 flex">
                         <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-                          {problemStatementData?.output_format?.subtype === "voice" 
-                            ? "Processing voice input..." 
+                          {problemStatementData?.output_format?.subtype ===
+                          "voice"
+                            ? "Processing voice input..."
                             : "Generating solutions..."}
                         </p>
                       </div>
@@ -539,15 +560,23 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
                           isLoading={!thoughtsData}
                         />
                         <SolutionSection
-                          title={problemStatementData?.output_format?.subtype === "voice" ? "Response" : "Solution"}
+                          title={
+                            problemStatementData?.output_format?.subtype ===
+                            "voice"
+                              ? "Response"
+                              : "Solution"
+                          }
                           content={solutionData}
                           isLoading={!solutionData}
                         />
-                        {problemStatementData?.output_format?.subtype !== "voice" && (
+                        {problemStatementData?.output_format?.subtype !==
+                          "voice" && (
                           <ComplexitySection
                             timeComplexity={timeComplexityData}
                             spaceComplexity={spaceComplexityData}
-                            isLoading={!timeComplexityData || !spaceComplexityData}
+                            isLoading={
+                              !timeComplexityData || !spaceComplexityData
+                            }
                           />
                         )}
                       </>
@@ -560,7 +589,7 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-export default Solutions
+export default Solutions;

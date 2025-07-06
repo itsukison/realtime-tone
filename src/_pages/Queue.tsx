@@ -1,99 +1,104 @@
-import React, { useState, useEffect, useRef } from "react"
-import { useQuery } from "react-query"
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
+import React, { useState, useEffect, useRef } from "react";
+import { useQuery } from "react-query";
+import ScreenshotQueue from "../components/Queue/ScreenshotQueue";
 import {
   Toast,
   ToastTitle,
   ToastDescription,
   ToastVariant,
-  ToastMessage
-} from "../components/ui/toast"
-import QueueCommands from "../components/Queue/QueueCommands"
+  ToastMessage,
+} from "../components/ui/toast";
+import QueueCommands from "../components/Queue/QueueCommands";
 
 interface QueueProps {
-  setView: React.Dispatch<React.SetStateAction<"queue" | "solutions" | "debug">>
+  setView: React.Dispatch<
+    React.SetStateAction<"queue" | "solutions" | "debug">
+  >;
 }
 
 const Queue: React.FC<QueueProps> = ({ setView }) => {
-  const [toastOpen, setToastOpen] = useState(false)
+  const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastMessage>({
     title: "",
     description: "",
-    variant: "neutral"
-  })
+    variant: "neutral",
+  });
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const [tooltipHeight, setTooltipHeight] = useState(0)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipHeight, setTooltipHeight] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const { data: screenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
+  const { data: screenshots = [], refetch } = useQuery<
+    Array<{ path: string; preview: string }>,
+    Error
+  >(
     ["screenshots"],
     async () => {
       try {
-        const existing = await window.electronAPI.getScreenshots()
-        return existing
+        const existing = await window.electronAPI.getScreenshots();
+        return existing;
       } catch (error) {
-        console.error("Error loading screenshots:", error)
-        showToast("Error", "Failed to load existing screenshots", "error")
-        return []
+        console.error("Error loading screenshots:", error);
+        showToast("Error", "Failed to load existing screenshots", "error");
+        return [];
       }
     },
     {
       staleTime: Infinity,
       cacheTime: Infinity,
       refetchOnWindowFocus: true,
-      refetchOnMount: true
+      refetchOnMount: true,
     }
-  )
+  );
 
   const showToast = (
     title: string,
     description: string,
     variant: ToastVariant
   ) => {
-    setToastMessage({ title, description, variant })
-    setToastOpen(true)
-  }
+    setToastMessage({ title, description, variant });
+    setToastOpen(true);
+  };
 
   const handleDeleteScreenshot = async (index: number) => {
-    const screenshotToDelete = screenshots[index]
+    const screenshotToDelete = screenshots[index];
 
     try {
       const response = await window.electronAPI.deleteScreenshot(
         screenshotToDelete.path
-      )
+      );
 
       if (response.success) {
-        refetch()
+        refetch();
       } else {
-        console.error("Failed to delete screenshot:", response.error)
-        showToast("Error", "Failed to delete the screenshot file", "error")
+        console.error("Failed to delete screenshot:", response.error);
+        showToast("Error", "Failed to delete the screenshot file", "error");
       }
     } catch (error) {
-      console.error("Error deleting screenshot:", error)
+      console.error("Error deleting screenshot:", error);
     }
-  }
+  };
 
   useEffect(() => {
     const updateDimensions = () => {
       if (contentRef.current) {
-        let contentHeight = contentRef.current.scrollHeight
-        const contentWidth = contentRef.current.scrollWidth
+        let contentHeight = contentRef.current.scrollHeight;
+        const contentWidth = contentRef.current.scrollWidth;
         if (isTooltipVisible) {
-          contentHeight += tooltipHeight
+          contentHeight += tooltipHeight;
         }
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
-          height: contentHeight
-        })
+          height: contentHeight,
+        });
       }
-    }
+    };
 
-    const resizeObserver = new ResizeObserver(updateDimensions)
+    const resizeObserver = new ResizeObserver(updateDimensions);
     if (contentRef.current) {
-      resizeObserver.observe(contentRef.current)
+      resizeObserver.observe(contentRef.current);
     }
-    updateDimensions()
+    updateDimensions();
 
     const cleanupFunctions = [
       window.electronAPI.onScreenshotTaken(() => refetch()),
@@ -103,29 +108,29 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
           "Processing Failed",
           "There was an error processing your screenshots.",
           "error"
-        )
-        setView("queue")
-        console.error("Processing error:", error)
+        );
+        setView("queue");
+        console.error("Processing error:", error);
       }),
       window.electronAPI.onProcessingNoScreenshots(() => {
         showToast(
           "No Screenshots",
           "There are no screenshots to process.",
           "neutral"
-        )
-      })
-    ]
+        );
+      }),
+    ];
 
     return () => {
-      resizeObserver.disconnect()
-      cleanupFunctions.forEach((cleanup) => cleanup())
-    }
-  }, [isTooltipVisible, tooltipHeight])
+      resizeObserver.disconnect();
+      cleanupFunctions.forEach((cleanup) => cleanup());
+    };
+  }, [isTooltipVisible, tooltipHeight]);
 
   const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
-    setIsTooltipVisible(visible)
-    setTooltipHeight(height)
-  }
+    setIsTooltipVisible(visible);
+    setTooltipHeight(height);
+  };
 
   return (
     <div ref={contentRef} className={`bg-transparent w-1/2`}>
@@ -153,7 +158,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Queue
+export default Queue;

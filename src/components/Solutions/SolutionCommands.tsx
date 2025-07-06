@@ -1,40 +1,40 @@
-import React, { useState, useEffect, useRef } from "react"
-import { IoLogOutOutline } from "react-icons/io5"
+import React, { useState, useEffect, useRef } from "react";
+import { IoLogOutOutline } from "react-icons/io5";
 
 interface SolutionCommandsProps {
-  extraScreenshots: any[]
-  onTooltipVisibilityChange?: (visible: boolean, height: number) => void
+  extraScreenshots: any[];
+  onTooltipVisibilityChange?: (visible: boolean, height: number) => void;
 }
 
 const SolutionCommands: React.FC<SolutionCommandsProps> = ({
   extraScreenshots,
-  onTooltipVisibilityChange
+  onTooltipVisibilityChange,
 }) => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const tooltipRef = useRef<HTMLDivElement>(null)
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (onTooltipVisibilityChange) {
-      let tooltipHeight = 0
+      let tooltipHeight = 0;
       if (tooltipRef.current && isTooltipVisible) {
-        tooltipHeight = tooltipRef.current.offsetHeight + 10 // Adjust if necessary
+        tooltipHeight = tooltipRef.current.offsetHeight + 10; // Adjust if necessary
       }
-      onTooltipVisibilityChange(isTooltipVisible, tooltipHeight)
+      onTooltipVisibilityChange(isTooltipVisible, tooltipHeight);
     }
-  }, [isTooltipVisible, onTooltipVisibilityChange])
+  }, [isTooltipVisible, onTooltipVisibilityChange]);
 
   const handleMouseEnter = () => {
-    setIsTooltipVisible(true)
-  }
+    setIsTooltipVisible(true);
+  };
 
   const handleMouseLeave = () => {
-    setIsTooltipVisible(false)
-  }
+    setIsTooltipVisible(false);
+  };
 
   return (
     <div>
       <div className="pt-2 w-fit">
-        <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-lg py-2 px-4 flex items-center justify-center gap-4">
+        <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-xl py-2 px-4 flex items-center justify-center gap-4 cursor-move">
           {/* Show/Hide */}
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-[11px] leading-none">Show/Hide</span>
@@ -109,7 +109,7 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                 className="absolute top-full right-0 mt-2 w-80"
                 style={{ zIndex: 100 }}
               >
-                <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg">
+                <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg tooltip-content">
                   {/* Tooltip content */}
                   <div className="space-y-4">
                     <h3 className="font-medium whitespace-nowrap">
@@ -209,7 +209,7 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SolutionCommands
+export default SolutionCommands;

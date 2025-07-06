@@ -1,77 +1,87 @@
-import React, { useState, useEffect, useRef } from "react"
-import { IoLogOutOutline } from "react-icons/io5"
+import React, { useState, useEffect, useRef } from "react";
+import { IoLogOutOutline } from "react-icons/io5";
+import { parseBoldText } from "../../lib/utils";
 
 interface QueueCommandsProps {
-  onTooltipVisibilityChange: (visible: boolean, height: number) => void
-  screenshots: Array<{ path: string; preview: string }>
+  onTooltipVisibilityChange: (visible: boolean, height: number) => void;
+  screenshots: Array<{ path: string; preview: string }>;
 }
 
 const QueueCommands: React.FC<QueueCommandsProps> = ({
   onTooltipVisibilityChange,
-  screenshots
+  screenshots,
 }) => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const tooltipRef = useRef<HTMLDivElement>(null)
-  const [isRecording, setIsRecording] = useState(false)
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
-  const [audioResult, setAudioResult] = useState<string | null>(null)
-  const chunks = useRef<Blob[]>([])
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null
+  );
+  const [audioResult, setAudioResult] = useState<string | null>(null);
+  const chunks = useRef<Blob[]>([]);
 
   useEffect(() => {
-    let tooltipHeight = 0
+    let tooltipHeight = 0;
     if (tooltipRef.current && isTooltipVisible) {
-      tooltipHeight = tooltipRef.current.offsetHeight + 10
+      tooltipHeight = tooltipRef.current.offsetHeight + 10;
     }
-    onTooltipVisibilityChange(isTooltipVisible, tooltipHeight)
-  }, [isTooltipVisible])
+    onTooltipVisibilityChange(isTooltipVisible, tooltipHeight);
+  }, [isTooltipVisible]);
 
   const handleMouseEnter = () => {
-    setIsTooltipVisible(true)
-  }
+    setIsTooltipVisible(true);
+  };
 
   const handleMouseLeave = () => {
-    setIsTooltipVisible(false)
-  }
+    setIsTooltipVisible(false);
+  };
 
   const handleRecordClick = async () => {
     if (!isRecording) {
       // Start recording
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const recorder = new MediaRecorder(stream)
-        recorder.ondataavailable = (e) => chunks.current.push(e.data)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = (e) => chunks.current.push(e.data);
         recorder.onstop = async () => {
-          const blob = new Blob(chunks.current, { type: chunks.current[0]?.type || 'audio/webm' })
-          chunks.current = []
-          const reader = new FileReader()
+          const blob = new Blob(chunks.current, {
+            type: chunks.current[0]?.type || "audio/webm",
+          });
+          chunks.current = [];
+          const reader = new FileReader();
           reader.onloadend = async () => {
-            const base64Data = (reader.result as string).split(',')[1]
+            const base64Data = (reader.result as string).split(",")[1];
             try {
-              const result = await window.electronAPI.analyzeAudioFromBase64(base64Data, blob.type)
-              setAudioResult(result.text)
+              const result = await window.electronAPI.analyzeAudioFromBase64(
+                base64Data,
+                blob.type
+              );
+              setAudioResult(result.text);
             } catch (err) {
-              setAudioResult('Audio analysis failed.')
+              setAudioResult("Audio analysis failed.");
             }
-          }
-          reader.readAsDataURL(blob)
-        }
-        setMediaRecorder(recorder)
-        recorder.start()
-        setIsRecording(true)
+          };
+          reader.readAsDataURL(blob);
+        };
+        setMediaRecorder(recorder);
+        recorder.start();
+        setIsRecording(true);
       } catch (err) {
-        setAudioResult('Could not start recording.')
+        setAudioResult("Could not start recording.");
       }
     } else {
       // Stop recording
-      mediaRecorder?.stop()
-      setIsRecording(false)
-      setMediaRecorder(null)
+      mediaRecorder?.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
     }
-  }
+  };
 
   return (
     <div className="pt-2 w-fit">
-      <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-lg py-2 px-4 flex items-center justify-center gap-4">
+      <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-xl py-2 px-4 flex items-center justify-center gap-4 cursor-move">
         {/* Show/Hide */}
         <div className="flex items-center gap-2">
           <span className="text-[11px] leading-none">Show/Hide</span>
@@ -118,14 +128,16 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
         {/* Voice Recording Button */}
         <div className="flex items-center gap-2">
           <button
-            className={`bg-white/10 hover:bg-white/20 transition-colors rounded-md px-2 py-1 text-[11px] leading-none text-white/70 flex items-center gap-1 ${isRecording ? 'bg-red-500/70 hover:bg-red-500/90' : ''}`}
+            className={`bg-white/10 hover:bg-white/20 transition-colors rounded-md px-2 py-1 text-[11px] leading-none text-white/70 flex items-center gap-1 ${
+              isRecording ? "bg-red-500/70 hover:bg-red-500/90" : ""
+            }`}
             onClick={handleRecordClick}
             type="button"
           >
             {isRecording ? (
-              <span className="animate-pulse">● Stop Recording</span>
+              <span className="animate-pulse">●Stop</span>
             ) : (
-              <span>🎤 Record Voice</span>
+              <span>Record</span>
             )}
           </button>
         </div>
@@ -146,7 +158,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
               ref={tooltipRef}
               className="absolute top-full right-0 mt-2 w-80"
             >
-              <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg">
+              <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg tooltip-content">
                 <div className="space-y-4">
                   <h3 className="font-medium truncate">Keyboard Shortcuts</h3>
                   <div className="space-y-3">
@@ -225,12 +237,12 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
       </div>
       {/* Audio Result Display */}
       {audioResult && (
-        <div className="mt-2 p-2 bg-white/10 rounded text-white text-xs max-w-md">
-          <span className="font-semibold">Audio Result:</span> {audioResult}
+        <div className="mt-2 p-2 bg-black/80 rounded-xl text-gray-50 text-xs w-full border border-white/10 whitespace-pre-line content-area p-3">
+          <span className="font-semibold"></span> {parseBoldText(audioResult)}
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default QueueCommands
+export default QueueCommands;

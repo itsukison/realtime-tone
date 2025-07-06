@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Electron draggable regions */
+.draggable-window {
+  -webkit-app-region: drag;
+}
+
+/* Make interactive elements non-draggable */
+button,
+input,
+textarea,
+select,
+a,
+.no-drag,
+[role="button"],
+[tabindex] {
+  -webkit-app-region: no-drag;
+}
+
+/* Specific non-draggable areas for content */
+.content-area,
+.bg-black,
+.rounded-md,
+.tooltip-content {
+  -webkit-app-region: no-drag;
+}

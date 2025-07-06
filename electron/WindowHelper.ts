@@ -93,7 +93,8 @@ export class WindowHelper {
       fullscreenable: false,
       hasShadow: false,
       backgroundColor: "#00000000",
-      focusable: true
+      focusable: true,
+      movable: true
     }
 
     this.mainWindow = new BrowserWindow(windowSettings)
